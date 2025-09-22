@@ -1,0 +1,26 @@
+# dune utop
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /home/for5en/.cache/dune/db
+# Workspace root: /home/for5en/Programming/Ocaml/lista7/zadanie3
+# Auto-detected concurrency: 4
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /usr/bin/ocamlc.opt -config > /tmp/dune_e6068c_output
+$ (cd _build/.sandbox/b71104c3cd76a59ba93d4c3615bd2dc7/default && /home/for5en/.opam/default/bin/menhir src/parser.mly --base src/parser --infer-write-query src/parser__mock.ml.mock)
+$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl src/parser__mock.ml.mock) > _build/default/src/.pair.objs/parser__mock.impl.d
+$ (cd _build/.sandbox/fcc8921c0c4a28593eb2a991f7dbf6ce/default && /usr/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I src/.pair.objs/byte -open Pair -short-paths -i -impl src/parser__mock.ml.mock) > _build/.sandbox/fcc8921c0c4a28593eb2a991f7dbf6ce/default/src/parser__mock.mli.inferred
+$ (cd _build/.sandbox/daa123023537025f4665576e90fdc9c9/default && /home/for5en/.opam/default/bin/menhir src/parser.mly --base src/parser --infer-read-reply src/parser__mock.mli.inferred)
+> Warning: 3 states have shift/reduce conflicts.
+> Warning: 24 shift/reduce conflicts were arbitrarily resolved.
+$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl src/parser.ml) > _build/default/src/.pair.objs/pair__Parser.impl.d
+$ (cd _build/default && /usr/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I src/.pair.objs/byte -intf-suffix .ml -no-alias-deps -opaque -open Pair -o src/.pair.objs/byte/pair__Parser.cmo -c -impl src/parser.ml)
+$ (cd _build/default && /usr/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -a -o src/pair.cma src/.pair.objs/byte/pair.cmo src/.pair.objs/byte/pair__Ast.cmo src/.pair.objs/byte/pair__Parser.cmo src/.pair.objs/byte/pair__Lexer.cmo src/.pair.objs/byte/pair__Main.cmo)
+$ (cd _build/default && /usr/bin/ocamlc.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -24 -g -o .utop/utop.bc /usr/lib/ocaml/compiler-libs/ocamlcommon.cma /usr/lib/ocaml/compiler-libs/ocamlbytecomp.cma /usr/lib/ocaml/compiler-libs/ocamltoplevel.cma /home/for5en/.opam/default/lib/findlib/findlib.cma /home/for5en/.opam/default/lib/findlib/findlib_top.cma /home/for5en/.opam/default/lib/logs/logs.cma /home/for5en/.opam/default/lib/lwt/lwt.cma /home/for5en/.opam/default/lib/logs/lwt/logs_lwt.cma /usr/lib/ocaml/unix.cma /usr/lib/ocaml/bigarray.cma /home/for5en/.opam/default/lib/ocplib-endian/ocplib_endian.cma /home/for5en/.opam/default/lib/ocplib-endian/bigstring/ocplib_endian_bigstring.cma /usr/lib/ocaml/threads/threads.cma /home/for5en/.opam/default/lib/lwt/unix/lwt_unix.cma -I /home/for5en/.opam/default/lib/lwt/../stublibs /home/for5en/.opam/default/lib/react/react.cma /home/for5en/.opam/default/lib/lwt_react/lwt_react.cma /home/for5en/.opam/default/lib/result/result.cma /home/for5en/.opam/default/lib/uutf/uutf.cma /home/for5en/.opam/default/lib/uucp/uucp.cma /home/for5en/.opam/default/lib/uuseg/uuseg.cma /home/for5en/.opam/default/lib/zed/zed.cma /home/for5en/.opam/default/lib/trie/trie.cma /home/for5en/.opam/default/lib/mew/mew.cma /home/for5en/.opam/default/lib/mew_vi/mew_vi.cma /home/for5en/.opam/default/lib/lambda-term/lambda_term.cma -I /home/for5en/.opam/default/lib/lambda-term/../stublibs /home/for5en/.opam/default/lib/xdg/xdg.cma -I /home/for5en/.opam/default/lib/xdg/../stublibs /home/for5en/.opam/default/lib/utop/uTop.cma src/pair.cma .utop/.utop.eobjs/byte/dune__exe__Utop.cmo -linkall -warn-error -31)

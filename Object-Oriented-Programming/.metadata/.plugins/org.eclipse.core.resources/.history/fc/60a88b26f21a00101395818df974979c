@@ -1,0 +1,598 @@
+import javax.swing.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.Serializable;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.EOFException;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.Container;
+import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Collections;
+
+interface Obserwator extends Serializable
+{
+    void powiadomienie(Ksiazka k);
+    int priority();
+} 
+
+class porownajObs implements Comparator <Obserwator>
+{
+    public int compare(Obserwator a, Obserwator b)
+    {
+        if(a.priority() < b.priority()) return 1;
+        else return -1;
+    }
+}
+
+class Ksiazka implements Serializable
+{
+    String tytul;
+    int rokpowstania;
+    ArrayList<Pisarz> autorzy = new ArrayList<Pisarz>();
+
+    Ksiazka(String tytul, int rokpowstania, ArrayList<Pisarz> autorzy)
+    {
+        // KONSTRUKTOR PRZYJMUJE AUTOROW
+        this.tytul = tytul;
+        this.rokpowstania = rokpowstania;
+        for(Pisarz pisarz : autorzy)
+        {
+            this.autorzy.add(pisarz);
+        }
+    }
+
+    public String toString()
+    {
+        // TWORZE JEDEN NAPIS Z AUTORAMI
+        String autorstwo = "";
+        for(Pisarz pisarz : autorzy)
+        {
+            autorstwo = autorstwo + pisarz + ", ";
+        }
+        
+        // WYPISUJE AUTOROW BEZ PRZECINKA NA KONCU
+        return tytul + " autorstwa " + autorstwo.substring(0, autorstwo.length()-2);
+    }
+}
+
+class KsiazkaSwing extends JPanel implements ActionListener
+{
+	private JTextField tytul;
+	private JTextField rokpowstania;
+	private JList<String> autorzyList;
+    private DefaultListModel<String> autorzyListModel;	
+	
+	Ksiazka model;
+	BazaDanych baza;
+	
+	public KsiazkaSwing(Ksiazka k, BazaDanych baza)
+	{
+		model = k;
+		this.baza = baza;
+		JLabel tytul_etykieta = new JLabel("Tytul");
+		JLabel rok_etykieta = new JLabel("Rok powstania");
+		JLabel autorzy_etykieta = new JLabel("Autorzy");
+		this.tytul = new JTextField(k.tytul, 40);
+		this.rokpowstania = new JTextField(Integer.toString(k.rokpowstania), 40);
+		
+		autorzyListModel = new DefaultListModel<>();
+        for (Pisarz pisarz : k.autorzy) {
+            autorzyListModel.addElement(pisarz.toString());
+        }
+        autorzyList = new JList<>(autorzyListModel);
+        JScrollPane autorzyscroll = new JScrollPane(autorzyList);
+		
+		JButton zapisz = new JButton("Zapisz");
+		zapisz.addActionListener(this);
+		
+		setLayout(new GridLayout(4, 2));
+        add(tytul_etykieta);
+        add(tytul);
+        
+        add(rok_etykieta);
+        add(rokpowstania);
+        
+        add(autorzy_etykieta);
+        add(autorzyscroll);
+        
+        add(zapisz);
+	}
+	
+	
+	
+	public void actionPerformed(ActionEvent e) 
+	{
+		model.tytul = tytul.getText();
+        System.out.println("Zmiana tytułu: " + tytul.getText());
+        model.rokpowstania = Integer.parseInt(rokpowstania.getText());
+        System.out.println("Zmiana roku wydania: " + rokpowstania.getText());
+        baza.zapisz();
+	}
+}
+
+
+class Pisarz implements Serializable
+{
+    String pseudonim;
+    int rokurodzenia;
+
+    ArrayList<Obserwator> w = new ArrayList<Obserwator>();
+    ArrayList<Ksiazka> ksiazki = new ArrayList<Ksiazka>();
+
+    // KONSTRUKTOR PRZYJMUJE PSEUDONIM I KOLEJNO OBSERWATOROW
+    Pisarz (String pseudonim, int rokurodzenia, Obserwator... obserwatorzy)
+    {
+        this.pseudonim = pseudonim;
+        this.rokurodzenia = rokurodzenia;
+        for(Obserwator o : obserwatorzy)
+        {
+            this.w.add(o);
+        }
+    }
+
+    // FUNKCJA POMOCNICZA KTORA POWIADAMIA WSZYSTKICH OBSERWUJACYCH
+    private void powiadom(Ksiazka ksiazka)
+    {
+        Collections.sort(w, new porownajObs());
+        for(Obserwator o : w)
+        {
+            o.powiadomienie(ksiazka);
+        }
+    }
+    
+    // FUNKCJA POMOCNICZA KTORA DODAJE KSIAZKE DO ZBIORU NAPISANYCH I POWIADAMIA OBSERWUJACYCH
+    public void ejnapisales(Ksiazka ksiazka)
+    {
+        this.ksiazki.add(ksiazka);
+        powiadom(ksiazka);
+    }
+
+    // FUNKCJA PRZYJMUJACA TYTUL I AUTOROW
+    void napisz(String tytul, int rokpowstania, Pisarz... autorzyTab)
+    {
+        ArrayList<Pisarz> autorzy = new ArrayList<Pisarz>();
+        for(Pisarz autor : autorzyTab) autorzy.add(autor);
+        autorzy.add(this);
+
+        // TWORZE NOWA KSIAZKE PODAJAC TYTUL i AUTOROW
+        Ksiazka ksiazka = new Ksiazka(tytul, rokpowstania, autorzy);
+
+        // WYWOLUJE FUNKCJE ZE NAPISANO KSIAZKE WE WSZYSTKICH AUTORACH
+        for(Pisarz autor : autorzy)
+        {
+            autor.ejnapisales(ksiazka);
+        }
+    }
+
+    public String toString()
+    {
+        return pseudonim;
+    }
+
+    public void addObs(Obserwator o)
+    {
+        w.add(o);
+    }
+    public void delObs(Obserwator o)
+    {
+        w.remove(o);
+    }
+}
+
+class PisarzSwing extends JPanel implements ActionListener
+{
+	private JTextField pseudonim;
+	private JTextField rokurodzenia;
+	private JList<String> obsList;
+	private DefaultListModel<String> obsListModel;
+    private JList<String> bookList;
+    private DefaultListModel<String> bookListModel;
+    
+    Pisarz model;
+    BazaDanych baza;
+    
+    public PisarzSwing(Pisarz p, BazaDanych baza)
+    {
+    	model = p;
+    	this.baza = baza;
+    	JLabel pseudonim_etykieta = new JLabel("Pseudonim");
+    	JLabel rok_etykieta = new JLabel("Rok urodzenia");
+    	JLabel obs_etykieta = new JLabel("Obserwujacy:");
+    	JLabel book_etykieta = new JLabel("Napisane ksiazki:");
+    	this.pseudonim = new JTextField(p.pseudonim);
+    	this.rokurodzenia = new JTextField(Integer.toString(p.rokurodzenia));
+    	
+    	obsListModel = new DefaultListModel<>();
+        for (Obserwator obs : p.w) {
+            obsListModel.addElement(obs.toString());
+        }
+        obsList = new JList<>(obsListModel);
+        JScrollPane obsscroll = new JScrollPane(obsList);
+        
+        bookListModel = new DefaultListModel<>();
+        for (Ksiazka b : p.ksiazki) {
+            bookListModel.addElement(b.tytul);
+        }
+        bookList = new JList<>(bookListModel);
+        JScrollPane bookscroll = new JScrollPane(bookList);
+    	
+    	JButton zapisz = new JButton("zapisz");
+    	zapisz.addActionListener(this);
+    	
+    	this.setLayout(new GridLayout(5, 2));
+    	
+    	this.add(pseudonim_etykieta);
+    	this.add(pseudonim);
+    	this.add(rok_etykieta);
+    	this.add(rokurodzenia);
+    	
+    	this.add(obs_etykieta);
+    	this.add(obsscroll);
+    	
+    	this.add(book_etykieta);
+    	this.add(bookscroll);
+    	
+    	this.add(zapisz);
+    }
+    
+    public void actionPerformed(ActionEvent e) 
+	{
+		model.pseudonim = pseudonim.getText();
+        System.out.println("Zmiana pseudonimu na: " + pseudonim.getText());
+        model.rokurodzenia = Integer.parseInt(rokurodzenia.getText());
+        System.out.println("Zmiana roku urodzenia na: " + rokurodzenia.getText());
+        baza.zapisz();
+	}
+}
+
+class Wydawnictwo implements Obserwator 
+{
+    String nazwa;
+    int rokpowstania;
+    
+    Wydawnictwo(String nazwa, int rokpowstania)
+    {
+        this.nazwa = nazwa;
+        this.rokpowstania = rokpowstania;
+    }
+
+    void wydajKsiazke(Ksiazka ksiazka) 
+    {
+        System.out.println("Wydaje ksiazkę " + ksiazka);
+    }
+
+    public void powiadomienie(Ksiazka ksiazka)
+    {
+        if(ksiazka.tytul.charAt(0) == nazwa.charAt(0)) this.wydajKsiazke(ksiazka);
+    }
+
+    public String toString()
+    {
+        return nazwa;
+    }
+
+    public int priority()
+    {
+        return 1;
+    }
+}
+
+class WydawnictwoSwing extends JPanel implements ActionListener
+{
+	private JTextField nazwa;
+	private JTextField rokpowstania;
+    
+    Wydawnictwo model;
+    BazaDanych baza;
+	
+	public WydawnictwoSwing(Wydawnictwo w, BazaDanych baza)
+	{
+		model = w;
+		this.baza = baza;
+		JLabel nazwa_etykieta = new JLabel("Nazwa");
+		JLabel rok_etykieta = new JLabel("Rok powstania");
+		this.nazwa = new JTextField(w.nazwa);
+		this.rokpowstania = new JTextField(Integer.toString(w.rokpowstania));
+		
+		JButton zapisz = new JButton("zapisz");
+		zapisz.addActionListener(this);
+		
+		this.setLayout(new GridLayout(3, 2));
+		
+		this.add(nazwa_etykieta);
+		this.add(rok_etykieta);
+		this.add(nazwa);
+		this.add(rokpowstania);
+		
+		this.add(zapisz);
+	}
+
+	public void actionPerformed(ActionEvent e) 
+	{
+		model.nazwa = nazwa.getText();
+	    System.out.println("Zmiana nazwy na: " + nazwa.getText());
+	    model.rokpowstania = Integer.parseInt(rokpowstania.getText());
+	    System.out.println("Zmiana roku powstania na: " + rokpowstania.getText());
+	    baza.zapisz();
+	}
+}
+
+
+class Czytelnik implements Obserwator
+{
+	String imie;
+    public void powiadomienie(Ksiazka k)
+    {
+        System.out.println("Nowa ksiazka " + k);
+    }
+
+    public int priority()
+    {
+        return 2;
+    }
+}
+
+class Blog implements Obserwator
+{
+    String nazwa;
+
+    Blog(String nazwa)
+    {
+        this.nazwa = nazwa;
+    }
+
+    public void powiadomienie(Ksiazka k)
+    {
+        System.out.println("Zapraszam do recenzji " + k);
+    }
+
+    public int priority()
+    {
+        return 3;
+    }
+}
+
+class Koneser implements Obserwator
+{
+    String imie;
+
+    Koneser(String imie)
+    {
+        this.imie = imie;
+    }
+
+    public void powiadomienie(Ksiazka k)
+    {
+        if(imie.charAt(imie.length()-1) == 'a') System.out.println("Pani " + imie + ", serdecznie polecam nowa ksiazke " + k);
+        else System.out.println("Panie " + imie + ", serdecznie polecam nowa ksiazke " + k);
+    }
+
+    public int priority()
+    {
+        return 4;
+    }
+}
+
+class BazaDanych implements Serializable {
+    public ArrayList<Pisarz> pisarze = new ArrayList<Pisarz>();
+    public ArrayList<Ksiazka> ksiazki = new ArrayList<Ksiazka>();
+    public ArrayList<Obserwator> obserwatorzy = new ArrayList<Obserwator>();
+
+    private static final String PLIK = "dane.ser";
+
+    public static BazaDanych wczytaj() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(PLIK))) {
+            return (BazaDanych) in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Nie znaleziono pliku, tworzenie przykładowych danych...");
+            return stworzPrzykladoweDane();
+        }
+    }
+
+    public void zapisz() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(PLIK))) {
+            out.writeObject(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static BazaDanych stworzPrzykladoweDane() {
+        BazaDanych baza = new BazaDanych();
+
+        // Obserwatorzy
+        Wydawnictwo w1 = new Wydawnictwo("Wolne Litery", 1990);
+        baza.obserwatorzy.add(w1);
+
+        // Pisarze
+        Pisarz p1 = new Pisarz("Adam Mickiewicz", 1798, w1);
+        Pisarz p2 = new Pisarz("Juliusz Słowacki", 1809, w1);
+        baza.pisarze.add(p1);
+        baza.pisarze.add(p2);
+
+        // Ksiazka
+        p1.napisz("Dziady", 1832, p2); // automatycznie tworzy Ksiazke i dodaje do autorów
+        baza.ksiazki.addAll(p1.ksiazki); // wszystkie książki p1 (wystarczy z jednego pisarza, bo dzielone referencje)
+
+        baza.zapisz();
+        return baza;
+    }
+}
+
+public class Literatura
+{
+    public static void main(String[] args)
+    {
+        BazaDanych baza = BazaDanych.wczytaj();
+        
+        /*KsiazkaSwing bookPanel = new KsiazkaSwing(baza.ksiazki.get(0), baza);
+        JFrame frame = new JFrame("Edycja ksiazki");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        frame.setSize(400, 300);  // Możesz dostosować rozmiar okna
+        frame.setLayout(new BorderLayout());
+
+        // Dodajemy panel Swing do okna
+        frame.add(bookPanel, BorderLayout.CENTER);
+
+        // Ustawiamy widoczność okna
+        frame.setVisible(true);
+        
+        
+        PisarzSwing autorPanel = new PisarzSwing(baza.pisarze.get(0), baza);
+        JFrame framep = new JFrame("Edycja autora");
+        framep.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        framep.setSize(400, 300);  // Możesz dostosować rozmiar okna
+        framep.setLayout(new BorderLayout());
+
+        // Dodajemy panel Swing do okna
+        framep.add(autorPanel, BorderLayout.CENTER);
+
+        // Ustawiamy widoczność okna
+        framep.setVisible(true);*/
+        
+        JFrame mainFrame = new JFrame();
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        mainFrame.setSize(400, 300);  // Możesz dostosować rozmiar okna
+        
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new GridLayout(1,3));
+        
+        /*String[] options = {"Edytuj Ksiazki", "Edytuj Autorow", "Edytuj Obserwatorow"};
+        JComboBox<String> wybor = new JComboBox<>(options);
+        
+        wybor.addActionListener(
+	        new ActionListener()
+	        {
+	            public void actionPerformed(ActionEvent e) {
+	                String selectedOption = (String) wybor.getSelectedItem();
+	                
+	                if (selectedOption.equals("Edytuj Ksiazki")) {
+	                    // Tworzymy nowe okno do edycji książek
+	                    JFrame bookFrame = new JFrame("Edycja Książek");
+	                    bookFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+	                    bookFrame.setSize(400, 300);
+	                    KsiazkaSwing bookPanel = new KsiazkaSwing(baza.ksiazki.get(0), baza);
+	                    bookFrame.add(bookPanel);
+	                    bookFrame.setVisible(true);
+	                } else if (selectedOption.equals("Edytuj Autorow")) {
+	                    // Tworzymy nowe okno do edycji autorów
+	                    JFrame authorFrame = new JFrame("Edycja Autorów");
+	                    authorFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+	                    authorFrame.setSize(400, 300);
+	                    PisarzSwing authorPanel = new PisarzSwing(baza.pisarze.get(0), baza);
+	                    authorFrame.add(authorPanel);
+	                    authorFrame.setVisible(true);
+	                } else if (selectedOption.equals("Edytuj Obserwatorow")) {
+	                    // Możesz dodać okno do edytowania obserwatorów
+	                    JFrame observerFrame = new JFrame("Edycja Obserwatorów");
+	                    observerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+	                    observerFrame.setSize(400, 300);
+	                    // Przykładowy panel
+	                    JLabel infoLabel = new JLabel("Panel do edytowania obserwatorów.");
+	                    observerFrame.add(infoLabel);
+	                    observerFrame.setVisible(true);
+	                }
+	            }
+	        });
+        
+        mainPanel.add(wybor, BorderLayout.NORTH);
+        
+        // Ustawiamy panel główny jako główny kontener okna
+        mainFrame.add(mainPanel);
+        
+        // Ustawiamy widoczność okna
+        mainFrame.setVisible(true);*/
+        
+        
+        
+        JButton ksiazki_ed = new JButton("Edytuj ksiazki");
+        ksiazki_ed.addActionListener(new ActionListener() 
+        {
+        	public void actionPerformed(ActionEvent e)
+        	{
+        		JFrame ksiazkiFrame = new JFrame("Edycja ksiazek");
+        		ksiazkiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+                ksiazkiFrame.setSize(600, 100);
+                
+                Ksiazka ksiazki [] = baza.ksiazki.toArray(new Ksiazka[0]);
+                JComboBox<Ksiazka> wybor = new JComboBox<>(ksiazki);
+                
+                wybor.addActionListener(
+        	        new ActionListener()
+        	        {
+        	            public void actionPerformed(ActionEvent e) 
+        	            {
+        	                Ksiazka wybranaKsiazka = (Ksiazka) wybor.getSelectedItem();
+        	                JFrame ksiazkaFrame = new JFrame("Edycja ksiazki");
+        	        		ksiazkaFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+        	                ksiazkaFrame.setSize(400, 300);
+        	                
+        	                JPanel bookPanel = new KsiazkaSwing(wybranaKsiazka, baza);
+        	                ksiazkaFrame.add(bookPanel);
+        	                
+        	                ksiazkaFrame.setVisible(true);
+        	            }
+        	        });
+                
+                ksiazkiFrame.add(wybor);
+                
+                ksiazkiFrame.setVisible(true);
+        	}
+        });
+        
+        JButton pisarze_ed = new JButton("Edytuj pisarzy");
+        pisarze_ed.addActionListener(new ActionListener() 
+        {
+        	public void actionPerformed(ActionEvent e)
+        	{
+        		JFrame pisarzeFrame = new JFrame("Edycja pisarzy");
+        		pisarzeFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+                pisarzeFrame.setSize(600, 100);
+                
+                Pisarz pisarze [] = baza.pisarze.toArray(new Pisarz[0]);
+                JComboBox<Pisarz> wybor = new JComboBox<>(pisarze);
+                
+                wybor.addActionListener(
+        	        new ActionListener()
+        	        {
+        	            public void actionPerformed(ActionEvent e) 
+        	            {
+        	                Pisarz wybranyPisarz = (Pisarz) wybor.getSelectedItem();
+        	                JFrame pisarzFrame = new JFrame("Edycja pisarza");
+        	        		pisarzFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Zamknie to okno po kliknięciu X
+        	                pisarzFrame.setSize(400, 300);
+        	                
+        	                JPanel pisarzPanel = new PisarzSwing(wybranyPisarz, baza);
+        	               	pisarzFrame.add(pisarzPanel);
+        	                
+        	                pisarzFrame.setVisible(true);
+        	            }
+        	        });
+                
+                pisarzeFrame.add(wybor);
+                pisarzeFrame.setVisible(true);
+        	}
+        });
+        
+        JButton obs_ed = new JButton("Edytuj Obserwatorow");
+        
+        mainPanel.add(ksiazki_ed);
+        mainPanel.add(pisarze_ed);
+        mainPanel.add(obs_ed);
+        
+        mainFrame.add(mainPanel);
+        mainFrame.setVisible(true);
+    }
+}

@@ -1,0 +1,1 @@
+void sortowanie(char*** tab, __compar_fn_t komp);

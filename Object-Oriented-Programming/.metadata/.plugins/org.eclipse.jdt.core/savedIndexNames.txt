@@ -1,0 +1,5 @@
+INDEX VERSION 1.134+/home/for5en/Programming/Programowanie_obiektowe/.metadata/.plugins/org.eclipse.jdt.core
+1865797976.index
+2840467638.index
+3930201841.index
+1293416447.index
