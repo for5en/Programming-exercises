@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1709221187 source:x:\warsztat\c++\matury\sufiksy2\main.cpp
+	<bits/stdc++.h>
+	<fstream>
+

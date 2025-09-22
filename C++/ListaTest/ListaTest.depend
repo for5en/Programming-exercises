@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1747696675 source:x:\warsztat\studia\aisd_pracownia\listatest\main.cpp
+	<bits/stdc++.h>
+	<cstdlib>
+	<ctime>
+

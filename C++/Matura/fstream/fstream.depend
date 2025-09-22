@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1704921709 source:x:\warsztat\c++\matura\fstream\main.cpp
+	<bits/stdc++.h>
+	<fstream>
+

@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1733007196 source:x:\warsztat\c\l7_z1\main.c
+	<stdio.h>
+	<stdlib.h>
+	"math_ops.h"
+	"number_utils.h"
+
+1733007155 source:x:\warsztat\c\l7_z1\math_ops.c
+	<limits.h>
+	"math_ops.h"
+
+1733007541 source:x:\warsztat\c\l7_z1\number_utils.c
+	"number_utils.h"
+
+1733007914 x:\warsztat\c\l7_z1\math_ops.h
+
+1733007793 x:\warsztat\c\l7_z1\number_utils.h
+
